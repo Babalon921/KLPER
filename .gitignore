@@ -9,3 +9,5 @@ data/*/
 # training outputs
 out/
 wandb/
+
+tee

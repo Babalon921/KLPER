@@ -33,16 +33,15 @@ def estimate_loss(model, datasets, cfg, ctx):
     model.eval()
     out = {}
     for split, ds in datasets.items():
-        losses = torch.zeros(cfg.eval_iters)
+        losses = torch.zeros(cfg.eval_iters, device=cfg.device)
         for k in range(cfg.eval_iters):
             x, y = ds.get_batch(cfg.batch_size, cfg.block_size, cfg.device)
             with ctx:
                 _, loss = model(x, y)
-            losses[k] = loss.item()
+            losses[k] = loss
         out[split] = losses.mean().item()
     model.train()
     return out
-
 
 def build_model(cfg: TrainConfig, meta) -> GPT:
     vocab_size = meta["vocab_size"] if meta else cfg.vocab_size

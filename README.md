@@ -28,10 +28,6 @@ python train.py --config configs/fineweb_edu_a10_nano.yaml
 python sample.py --ckpt out/fineweb_edu_a10_nano/ckpt.pt --prompt "The history of"
 ```
 
-```bash
-python train.py --config configs/fineweb_edu_a10_nano.yaml --max_iters=4000 --learning_rate=3e-4
-```
-
 Using The Pile instead:
 
 ```bash
