@@ -22,6 +22,7 @@ def get_lr(it: int, cfg: TrainConfig) -> float:
         return cfg.learning_rate * (it + 1) / (cfg.warmup_iters + 1)
     if it > cfg.lr_decay_iters:
         return cfg.min_lr
+    assert cfg.lr_decay_iters > cfg.warmup_iters, "lr_decay_iters must exceed warmup_iters"
     decay_ratio = (it - cfg.warmup_iters) / (cfg.lr_decay_iters - cfg.warmup_iters)
     coeff = 0.5 * (1.0 + math.cos(math.pi * decay_ratio))
     return cfg.min_lr + coeff * (cfg.learning_rate - cfg.min_lr)
