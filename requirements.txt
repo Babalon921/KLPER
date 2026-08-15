@@ -1,0 +1,11 @@
+torch>=2.2
+numpy>=1.24
+tiktoken>=0.6
+datasets>=2.18
+pyyaml>=6.0
+tqdm>=4.66
+# optional, only needed if you set wandb_log: true in a config
+# wandb>=0.16
+# optional, only needed if you set tensorboard_log: true in a config
+# (this is the `tensorboard` package -- no full TensorFlow install required)
+# tensorboard>=2.15

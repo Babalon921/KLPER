@@ -1,0 +1,40 @@
+
+
+out_dir: out/fineweb_edu_a100_small
+data_dir: data/fineweb_edu
+
+wandb_log: false
+wandb_run_name: fineweb_edu_a100_small
+
+# data / batching
+batch_size: 64
+block_size: 1024
+grad_accum_steps: 8      # effective batch = 64 * 8 * 1024 = 524,288 tokens/step
+
+# model (~123M params, GPT-2 small scale)
+n_layer: 12
+n_head: 12
+n_embd: 768
+dropout: 0.0
+bias: false
+
+# optimizer / schedule
+learning_rate: 6.0e-4
+max_iters: 8000
+weight_decay: 0.1
+warmup_iters: 200
+lr_decay_iters: 8000
+min_lr: 6.0e-5
+grad_clip: 1.0
+
+# eval / logging
+eval_interval: 250
+eval_iters: 50
+log_interval: 10
+sample_every: 500
+always_save_checkpoint: false
+
+# system
+device: cuda
+dtype: bfloat16
+compile: true

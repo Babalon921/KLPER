@@ -1,0 +1,40 @@
+
+
+out_dir: out/fineweb_edu_h100_detailed
+data_dir: data/fineweb_edu_6b
+
+wandb_log: false
+wandb_run_name: fineweb_edu_h100_detailed
+
+# data / batching
+batch_size: 32
+block_size: 1024
+grad_accum_steps: 16     # effective batch = 32 * 16 * 1024 = 524,288 tokens/step
+
+# model (~303M params total, ~252M non-embedding)
+n_layer: 20
+n_head: 16
+n_embd: 1024
+dropout: 0.0
+bias: false
+
+# optimizer / schedule
+learning_rate: 3.0e-4    # lower than the nano/small presets' 6e-4, standard for a wider model
+max_iters: 12000
+weight_decay: 0.1
+warmup_iters: 300
+lr_decay_iters: 12000
+min_lr: 3.0e-5
+grad_clip: 1.0
+
+# eval / logging
+eval_interval: 250
+eval_iters: 50
+log_interval: 10
+sample_every: 500
+always_save_checkpoint: false
+
+# system
+device: cuda
+dtype: bfloat16
+compile: true
