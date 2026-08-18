@@ -1,0 +1,25 @@
+# Python cache and bytecode
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+.venv/
+venv/
+
+# Development
+.git/
+.gitignore
+README.md
+LICENSE
+
+# Large data and training outputs (rebuild from scripts)
+data/*/
+out/
+wandb/
+tensorboard/
+
+# OS files
+.DS_Store
+Thumbs.db
+*.swp
+*.swo

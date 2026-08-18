@@ -157,12 +157,12 @@ def main():
     x, y = train_ds.get_batch(cfg.batch_size, cfg.block_size, cfg.device)
     t0 = time.time()
 
-    while iter_num <= cfg.max_iters:
+    while iter_num < cfg.max_iters:
         lr = get_lr(iter_num, cfg)
         for group in optimizer.param_groups:
             group["lr"] = lr
 
-        if iter_num % cfg.eval_interval == 0:
+        if cfg.eval_interval > 0 and iter_num % cfg.eval_interval == 0:
             losses = estimate_loss(model, datasets, cfg, ctx)
             print(f"step {iter_num}: train loss {losses['train']:.4f}, val loss {losses['val']:.4f}, lr {lr:.2e}")
             log_metrics(wandb_run, tb_writer, iter_num,
@@ -202,7 +202,7 @@ def main():
         scaler.update()
         optimizer.zero_grad(set_to_none=True)
 
-        if iter_num % cfg.log_interval == 0:
+        if cfg.log_interval > 0 and iter_num % cfg.log_interval == 0:
             dt = time.time() - t0
             t0 = time.time()
             tok_per_sec = cfg.batch_size * cfg.grad_accum_steps * cfg.block_size * cfg.log_interval / max(dt, 1e-9)

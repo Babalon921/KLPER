@@ -13,8 +13,9 @@ EOT = _enc._special_tokens['<|endoftext|>']
 def tokenize_doc(text: str) -> np.ndarray:
     ids = [EOT]
     ids.extend(_enc.encode_ordinary(text))
-    arr = np.array(ids, dtype=np.uint32)
-    assert (0 <= arr).all() and (arr < 2**16).all(), "token id out of uint16 range"
+    arr = np.asarray(ids, dtype=np.int64)
+    assert (arr >= 0).all() and (arr < 2**16).all(), "token id out of uint16 range"
+    arr = arr.astype(np.uint16)
     return arr.astype(np.uint16)
 
 

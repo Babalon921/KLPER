@@ -43,8 +43,9 @@ class ShardedBinDataset:
                 f"too short for block_size={block_size}"
             )
         ix = torch.randint(max_start, (batch_size,), generator=generator)
-        x = torch.stack([torch.from_numpy(data[i:i + block_size].astype(np.int64)) for i in ix])
-        y = torch.stack([torch.from_numpy(data[i + 1:i + 1 + block_size].astype(np.int64)) for i in ix])
+        offsets = ix[:, None] + np.arange(block_size)
+        x = torch.from_numpy(data[offsets].astype(np.int64))
+        y = torch.from_numpy(data[offsets + 1].astype(np.int64))
 
         if device == 'cuda':
             x = x.pin_memory().to(device, non_blocking=True)
