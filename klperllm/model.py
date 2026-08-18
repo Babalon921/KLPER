@@ -79,10 +79,11 @@ class Block(nn.Module):
         self.ln_2 = LayerNorm(config.n_embd, config.bias)
         self.mlp = MLP(config)
 
-    def forward(self, x):
-        x = x + self.attn(self.ln_1(x))
+    def forward(self, x, kv_cache=None):
+        attn_out, new_kv = self.attn(self.ln_1(x), kv_cache)
+        x = x + attn_out
         x = x + self.mlp(self.ln_2(x))
-        return x
+        return x, new_kv
 
 
 class GPT(nn.Module):
@@ -122,19 +123,24 @@ class GPT(nn.Module):
             n -= self.transformer.wpe.weight.numel()
         return n
 
-    def forward(self, idx, targets=None):
+    def forward(self, idx, targets=None, kv_cache=None, use_cache=False):
         device = idx.device
         b, t = idx.size()
-        assert t <= self.config.block_size, (
-            f"sequence length {t} exceeds block_size {self.config.block_size}"
+        start_pos = kv_cache[0][0].size(2) if (kv_cache is not None and kv_cache[0] is not None) else 0
+        assert start_pos + t <= self.config.block_size, (
+            f"context length {start_pos + t} exceeds block_size {self.config.block_size}"
         )
-        pos = torch.arange(0, t, dtype=torch.long, device=device)
+        pos = torch.arange(start_pos, start_pos + t, dtype=torch.long, device=device)
 
         tok_emb = self.transformer.wte(idx)
         pos_emb = self.transformer.wpe(pos)
         x = self.transformer.drop(tok_emb + pos_emb)
-        for block in self.transformer.h:
-            x = block(x)
+
+        new_kv_cache = []
+        for i, block in enumerate(self.transformer.h):
+            past = kv_cache[i] if kv_cache is not None else None
+            x, kv = block(x, past)
+            new_kv_cache.append(kv)
         x = self.transformer.ln_f(x)
 
         if targets is not None:
@@ -146,6 +152,8 @@ class GPT(nn.Module):
             logits = self.lm_head(x[:, [-1], :])
             loss = None
 
+        if use_cache:
+            return logits, loss, new_kv_cache
         return logits, loss
 
     def configure_optimizers(self, weight_decay, learning_rate, betas, device_type):
@@ -166,14 +174,22 @@ class GPT(nn.Module):
 
     @torch.no_grad()
     def generate(self, idx, max_new_tokens, temperature=1.0, top_k=None):
+        if idx.size(1) > self.config.block_size:
+            idx = idx[:, -self.config.block_size:]
+
+        logits, _, kv_cache = self(idx, use_cache=True)
+        logits = logits[:, -1, :]
+
         for _ in range(max_new_tokens):
-            idx_cond = idx if idx.size(1) <= self.config.block_size else idx[:, -self.config.block_size:]
-            logits, _ = self(idx_cond)
-            logits = logits[:, -1, :] / max(temperature, 1e-6)
+            logits = logits / max(temperature, 1e-6)
             if top_k is not None:
                 v, _ = torch.topk(logits, min(top_k, logits.size(-1)))
                 logits[logits < v[:, [-1]]] = -float('Inf')
             probs = F.softmax(logits, dim=-1)
             idx_next = torch.multinomial(probs, num_samples=1)
             idx = torch.cat((idx, idx_next), dim=1)
+
+            logits, _, kv_cache = self(idx_next, kv_cache=kv_cache, use_cache=True)
+            logits = logits[:, -1, :]
+
         return idx
